@@ -1,5 +1,4 @@
 """Ops Data Agent (smolagents ToolCallingAgent).
-
 Operasyon ekibinin (Selin) metrik ve analiz sorularını yanıtlar.
 Özellikler:
   * Semantic Layer (metrics.yaml): list_metrics + run_metric

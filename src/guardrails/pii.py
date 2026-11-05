@@ -1,4 +1,6 @@
-"""G6: PII'siz log. Ham 32 karakterlik Olist kimlikleri loglara/ticket'lara yazılmaz."""
+"""G6: PII'siz log. Ham 32 karakterlik Olist kimlikleri loglara/ticket'lara yazılmaz.
+log dosyalarına, eval raporlarına veya insan temsilcilere devredilen biletlere ham müşteri ve sipariş kimliklerinin düz metin olarak sızmasını engellemektir.
+"""
 import hashlib
 import re
 

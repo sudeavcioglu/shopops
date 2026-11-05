@@ -245,7 +245,7 @@ Hedef seviye değerlendirmesinde başarısız olan örneklerin kök nedenleri ve
   - Token maliyeti ve gecikme p95 > 8 sn olursa alarm.
   - Tool hata oranı (Error Rate) > %5 olursa alarm.
   - İade onay oranlarında normal dağılımın dışına çıkan ani sıçramalarda insan inceleme kuyruğuna yönlendirme.
-  - OpenTelemetry / Arize Phoenix veya Langfuse ile tüm trace'ler canlı izlenmelidir.
+
 
 ---
 

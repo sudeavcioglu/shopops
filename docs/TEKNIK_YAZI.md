@@ -79,19 +79,35 @@ Sistemde veritabanına kalıcı kayıt yazabilen tek bir araç vardır: `create_
 
 ---
 
-## 4. Karşılaştığımız Mühendislik Trade-off'ları
+## 4. Geliştirici Olarak Yaşadığım İkilemler ve Aldığım Mühendislik Kararları
 
-Bir yapay zekâ ajanı geliştirirken teorik planlar ile pratik kısıtlar sıklıkla çatışır. Projede verdiğimiz iki kritik mimari karar:
+Bir yapay zekâ ajanı geliştirirken teorik ders notları ile sahadaki pratik gerçekler hızla çatışır. Proje boyunca bizzat yaşadığım, tarttığım ve kararını verdiğim kritik dönüm noktaları:
 
-### Trade-off 1: `CodeAgent` vs `ToolCallingAgent`
-- **Denediğimiz Yol:** Hugging Face `smolagents` kütüphanesinin öne çıkan özelliği olan `CodeAgent`, modelin doğrudan Python kodu yazıp çalıştırmasını sağlar. İlk prototipte bunu denedik.
-- **Sorun:** Model serbest Python kodu çalıştırdığında, hafızadaki veritabanı bağlantı nesnelerine erişme veya kontrol dışı döngülere girme riski doğdu.
-- **Geçtiğimiz Çözüm:** `ToolCallingAgent` mimarisine geçtik. Model sadece tipli, şeması sıkı sıkıya belirlenmiş JSON argümanları üretir. Bu sayede saldırı yüzeyi minimuma indirildi.
+### 4.1. Neden Kural Motorunu Dil Modelinden Kopardım?
+Projeye başlarken iade kurallarını (14 gün cayma, 30 gün hasar, 10 günlük kargo gecikme tazminatı) modelin sistem talimatlarına verip doğrudan sormayı düşünebilirdim. Ancak testlerimde gördüm ki LLM'ler tarih farkı hesaplarında ve sınır günlerde (örneğin siparişin tesliminin tam 14. gününde olması) kararsız kalıp halüsinasyon görebiliyor. E-ticarette yanlış bir iade şirkete doğrudan para kaybı yazar.  
+**Benim Kararım:** İade uygunluğunu hesaplama işini modelden tamamen aldım; saf Python kodunda çalışan deterministik bir **Kural Motoruna (R0–R13)** kilitledim. Modele sadece *"Sen durumu öğren, kural motoruna sor, dönen sonucu müşteriye açıkla"* görevini verdim. Karar kodda, dilsel açıklama modelde kaldı.
 
-### Trade-off 2: Naif Eval vs Kota Dostu Resumable Checkpoint Pipeline
-- **Denediğimiz Yol:** 30 örneklik Golden Set'i standart bir for döngüsüyle baştan sona çalıştırıp en sonda JSON kaydetmek.
-- **Sorun:** Ücretsiz LLM API'lerinde (Gemini, Groq) dakikalık token limitine (TPM) veya sunucu yoğunluğuna (503) takıldığınızda tüm script çöküyor ve önceki 20 soruda harcanan token'lar ve zaman tamamen kayboluyordu.
-- **Geçtiğimiz Çözüm:** Değerlendirme script'ini (`run_eval.py`) anlık diske yazan (JSONL flush) ve kaldığı yerden devam edebilen (**resumable checkpointing**) endüstri standardı bir yapıya kavuşturduk. Bu sayede API kota aşımında script çökmek yerine güvenle duruyor ve tekrar çalıştırıldığında kaldığı sorudan devam ediyor.
+### 4.2. Yaşadığım Kriz ve Büyük Mimari Kararım: Resumable Checkpoint Eval Pipeline
+Eval aşamasına geldiğimde Gemini ve Groq API'lerinin ücretsiz katmanlarındaki hız sınırlarına (429 RateLimit) çarptım. Mevcut eval kodunu incelediğimde ciddi bir mühendislik açığı fark ettim:
+- Hiçbir şeyi diske anlık kaydetmiyordu.
+- İstek hızını sınırlamıyordu.
+- 20. soruda kota dolduğunda script çöküyor, önceki 19 sorunun harcadığı tüm token'lar çöpe gidiyor ve bir sonraki çalıştırmada en baştan başlıyordu!
+
+**Dedim ki: *"Bu sürdürülebilir bir mühendislik değil."***  
+Eval pipeline'ını baştan, kota dostu ve dayanıklı olacak şekilde yeniden yazdım:
+1. **Anlık Checkpoint:** Her tamamlanan soruyu anında diske (`checkpoint_final.jsonl`) satır satır yazıp flush eden bir mekanizma kurdum.
+2. **Kaldığı Yerden Devam Etme (Resumable):** Script tekrar açıldığında önce diski tarıyor, önceden çözülmüş soruları hafızadan yükleyip atlıyor ve doğrudan sıradaki sorudan başlıyor.
+3. **Zarif Durma (Graceful Exit):** 429 kota hatası aldığında çökmek yerine o ana kadarki tüm veriyi koruyup kullanıcıya temiz bir durum raporu veriyor.  
+*Bu sayede 30 soruluk resmi eval setini tek bir token dahi israf etmeden, sıfır veri kaybıyla tamamladım.*
+
+### 4.3. `CodeAgent` vs `ToolCallingAgent` İkilemi
+- **Denediğim Yol:** Hugging Face `smolagents` kütüphanesinin öne çıkan özelliği olan `CodeAgent`, modelin doğrudan Python kodu yazıp çalıştırmasını sağlar. İlk prototipte bunu denedim.
+- **Karşılaştığım Risk:** Model serbest Python kodu çalıştırdığında, hafızadaki veritabanı bağlantı nesnelerine erişme veya kontrol dışı döngülere girme riski doğdu.
+- **Benim Kararım:** `ToolCallingAgent` mimarisine geçtim. Model serbest kod çalıştırmak yerine yalnızca sıkı şemalı tipli JSON argümanları üretir. Bu sayede saldırı yüzeyini minimuma indirdim.
+
+### 4.4. Neden Human-in-the-Loop (HITL) Güvenlik Kapısı Şarttı?
+Bir yapay zekânın sohbet penceresinden doğrudan şirketin canlı veritabanına `INSERT` yapması büyük bir güvenlik açığıdır. Model manipüle edilebilir veya kullanıcıyı yanlış anlayabilir.  
+**Benim Kararım:** Veritabanına kalıcı kayıt yazabilen tek araç olan `create_return_request`'in önüne sunucu tarafında bir `ApprovalGate` koydum. Ajan talep oluşturduğunda doğrudan kayıt açamaz; ekranda müşteriye bir Onay Kartı çıkar. Yalnızca gerçek bir insan butona bastığında veritabanına kayıt commit edilir.
 
 ---
 

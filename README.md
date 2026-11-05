@@ -45,6 +45,39 @@ Modeli manipüle etmeye, rol atlamaya veya kapsam dışı talimatlar verdirmeye 
 
 ---
 
+## 💡 Geliştiricinin Mühendislik Günlüğü ve Düşünce Sürecim
+
+Bu projeyi geliştirirken temel amacım "bir LLM'e prompt verip her şeyi çözmesini beklemek" değil, **üretim ortamında gerçekten güvenilebilecek, hatası şirkete para kaybettirmeyecek dayanıklı bir sistem tasarlamaktı.** 
+
+Geliştirme sürecinde bizzat aldığım en kritik kararlar ve düşünce yolculuğum:
+
+### 1. Kural Motorunu Neden LLM'den Tamamen Kopardım?
+Projeye başlarken iade kurallarını (14 gün cayma hakkı, 30 gün hasar süresi, 10 günlük gecikme tazminatı) modelin sistem promptuna koyabilirdim. Ancak testler sırasında gördüm ki dil modelleri tarih farkı hesaplarında ve sınır günlerde (örneğin siparişin tesliminin tam 14. gününde olması) halüsinasyon görebiliyor. E-ticarette yanlış bir iade doğrudan şirkete finansal zarar yazar.  
+**Benim Kararım:** İade uygunluğu, hak sahipliği ve para tutarı hesaplamalarını dil modelinden tamamen aldım ve saf Python kodunda deterministik çalışan bir **Kural Motoruna (R0–R13)** kilitledim. Modele yalnızca *"Sen kural motorunu çağır, sonucu oku ve müşteriye nazikçe açıkla"* görevini verdim.
+
+### 2. Eval Aşamasında Yaşadığım Kriz ve Büyük Mimari Kararım: Resumable Checkpoint Pipeline
+Projenin değerlendirme (eval) aşamasına geldiğimde Gemini ve Groq API'lerinin ücretsiz katmanlarındaki dakikalık/günlük hız sınırlarına (429 RateLimit) takıldım. Mevcut `run_eval.py` kodunu incelediğimde ciddi bir mühendislik açığı fark ettim:
+- Hiçbir şeyi diske anlık önbelleğe almıyordu.
+- İstek hızını sınırlamıyordu.
+- 20. soruda kota dolduğunda script çöküyor, önceki 19 sorunun harcadığı tüm token'lar ve zaman çöpe gidiyor, bir sonraki çalıştırmada tekrar 1. sorudan başlıyordu!
+
+**Dedim ki: *"Bu sürdürülebilir bir mühendislik yaklaşımı değil."***  
+Eval pipeline'ını baştan, kota dostu ve dayanıklı olacak şekilde yeniden yazdım:
+1. **Anlık Checkpoint:** Her tamamlanan soruyu anında diske (`checkpoint_final.jsonl`) satır satır yazıp flush eden bir mekanizma kurdum.
+2. **Kaldığı Yerden Devam Etme (Resumable):** Script tekrar açıldığında önce diski tarıyor, önceden çözülmüş soruları hafızadan yükleyip atlıyor ve doğrudan sıradaki sorudan başlıyor.
+3. **Zarif Durma (Graceful Exit):** 429 kota hatası aldığında çökmek yerine o ana kadarki tüm veriyi koruyup kullanıcıya temiz bir durum raporu veriyor.  
+*Bu sayede 30 soruluk resmi eval setini tek bir token dahi israf etmeden, sıfır veri kaybıyla tamamladım.*
+
+### 3. Neden Human-in-the-Loop (HITL) Güvenlik Kapısı Kurdum?
+Bir yapay zekânın sohbet penceresinden doğrudan şirketin veritabanına `INSERT` yapması büyük bir güvenlik açığıdır. Model manipüle edilebilir veya yanlış anlayabilir.  
+**Benim Kararım:** Veritabanına kalıcı kayıt yazabilen tek araç olan `create_return_request`'in önüne sunucu tarafında bir `ApprovalGate` koydum. Ajan talep oluşturduğunda doğrudan kayıt açamaz; ekranda müşteriye bir Onay Kartı çıkar. Yalnızca gerçek bir insan butona bastığında veritabanına kayıt commit edilir.
+
+### 4. Framework Seçimi: Neden CodeAgent Değil de ToolCallingAgent?
+`smolagents` kütüphanesinin öne çıkan `CodeAgent` sınıfı modelin Python kodu yazıp çalıştırmasını sağlıyordu. Fakat üretim ortamında modelin keyfi kod çalıştırması veritabanı bağlantılarını manipüle etme veya kontrol dışı döngülere girme riski doğurur.  
+**Benim Kararım:** Saldırı yüzeyini küçülten, yalnızca sıkı şemalı JSON parametreleri üreten `ToolCallingAgent` sınıfını tercih ettim.
+
+---
+
 ## 📌 Proje Durumu
 
 | Bölüm | Durum | Not |
@@ -261,4 +294,4 @@ python app.py
 ## 📜 Lisans ve Atıf
 
 - **Veri Seti:** Olist, *Brazilian E-Commerce Public Dataset*, Kaggle, CC BY-NC-SA 4.0.
-- **Yapay Zekâ Kullanımı:** Bu projenin mimarisi, kural motoru ve eval pipeline'ı geliştirilirken AI asistanlarından pair-programming desteği alınmış; tüm testler, kurallar ve değerlendirme analizleri doğrulanmıştır.
+- **Yapay Zekâ Kullanımı:** Projenin mimarisi, kural motoru ve değerlendirme (eval) pipeline'ı geliştirilirken AI asistanlarından pair-programming desteği alınmıştır. AI tarafından üretilen kodlar ve öneriler test edilmiş; kuralların doğruluğu ve değerlendirme sonuçları bağımsız olarak doğrulanmıştır.

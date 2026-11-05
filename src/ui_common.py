@@ -1,4 +1,5 @@
-"""Arayüzlerin ortak yardımcıları (Gradio). Ham hata ve ham kimlik kullanıcıya sızmaz."""
+"""Teknik API ve kota hatalarını kullanıcı dostu Türkçe mesajlara dönüştüren, ajan adımlarını ise kişisel verileri (PII) 
+maskeleyerek arayüzde şeffafça görselleştiren UI yardımcı modülüdür."""
 from __future__ import annotations
 
 import json

@@ -1,10 +1,9 @@
 """Support Agent (smolagents ToolCallingAgent).
+Müşterinin sipariş sorgularını, iade taleplerini ve şirket politikası sorularını yanıtlayan yapay zeka ajanıdır.
 
-Neden ToolCallingAgent, CodeAgent değil? CodeAgent modelin yazdığı Python'u çalıştırır; yetkiyi tool
-katmanında kodla kilitleyen bu projede model çıktısını yürütmek yerine yalnız TİPLİ tool çağrısı
-yapmasını istiyoruz (daha küçük saldırı yüzeyi, G1/G2 ile uyumlu).
+Destek asistanımızda LLM'i karar verici değil, yalnızca bir arayüz ve orkestratör olarak konumlandırdık. İade uygunluğuna LLM değil deterministik kural motorumuz karar verir;
+veritabanına yazma yetkisini LLM'den alıp Human-in-the-Loop onay kapısına bağladık; müşteri kimliğini ise LLM'e parametre olarak hiç vermeyip sunucu oturumunda izole ettik.
 
-Kimlik (Session) ve onay (ApprovalGate) tool'ların İÇİNDE, sunucu tarafında durur; LLM'e parametre değildir.
 """
 from __future__ import annotations
 
@@ -165,7 +164,7 @@ def _record(tool: Tool, ctx: Ctx) -> Tool:
         res = orig(*a, **k)
         ctx.trace.append((tool.name, k or list(a), res))
         return res
-    tool.forward = wrapped   # örnek özniteliği sınıf metodunu gölgeler; şema doğrulaması init'te yapılmıştı
+    tool.forward = wrapped   
     return tool
 
 

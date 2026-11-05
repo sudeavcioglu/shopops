@@ -21,6 +21,30 @@ AI Agents Bootcamp 2026 · Final Proje (P2 · ShopOps)
 
 ---
 
+## 📸 Ekran Görüntüleri ve Arayüz
+
+### 1. Müşteri Destek & İade Onay Kartı (HITL — Human in the Loop)
+Müşteri iade talebi oluşturmak istediğinde sistem doğrudan kayıt açmaz; kullanıcıya detaylı bir onay kartı sunar:
+![İade Onay Kutucuğu](docs/iade%20onay%20kutucugu.png)
+
+### 2. İade Talebi Başarı Sonucu
+Kullanıcı ekrandaki **"Talebi Onayla"** düğmesine bastığında veritabanına kayıt güvenle yazılır ve talep numarası iletilir:
+![Ürün Talebi Sonucu](docs/ürün%20talebi%20sonucu.png)
+
+### 3. Operasyon Hızlı Metrik Paneli (Semantic Layer)
+Operasyon yöneticileri `metrics.yaml` üzerinden tanımlı standart metrikleri boyut ve filtrelere göre tek tıkla çalıştırabilir:
+![Operasyon Hızlı Panel](docs/operasyon%20hızlı%20panel.png)
+
+### 4. Operasyon Doğal Dil Analitiği (Ops Data Agent)
+Doğal dille sorulan metrik sorularında ajan şablondan ya da salt-okunur güvenli SQL ile anlık analitik üretir:
+![Operasyon Sohbet](docs/operasyon%20sohbet.png)
+
+### 5. Güvenlik & Prompt Injection Koruma Testi
+Modeli manipüle etmeye, rol atlamaya veya kapsam dışı talimatlar verdirmeye çalışan girdiler sınırlandırılır:
+![Oyun Kurma Testi](docs/oyun%20kurma%20testi.png)
+
+---
+
 ## 📌 Proje Durumu
 
 | Bölüm | Durum | Not |

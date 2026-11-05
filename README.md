@@ -14,10 +14,10 @@ short_description: Pazaryeri destek (iade, HITL) ve operasyon analitiği ajanı
 
 # 🛍️ ShopOps — Pazaryeri Müşteri Destek & Operasyon Ajanı
 
-"Örnekpazar" (kurgusal) pazaryerinde müşterinin *siparişim nerede / iade edebilir miyim* sorusunu **kurallara uygun ve yetkili** biçimde yanıtlayan, operasyon ekibinin metrik sorularını **tanımlı metriklerden ve salt-okunur SQL ile** cevaplayan çoklu ajan (Multi-Agent) sistemi.  
+"Örnekpazar" pazaryerinde müşterinin *siparişim nerede / iade edebilir miyim* sorusunu **kurallara uygun ve yetkili** biçimde yanıtlayan, operasyon ekibinin metrik sorularını **tanımlı metriklerden ve salt-okunur SQL ile** cevaplayan çoklu ajan (Multi-Agent) sistemi.  
 AI Agents Bootcamp 2026 · Final Proje (P2 · ShopOps)
 
-**Canlı demo:** _[Hugging Face Space linki buraya eklenecektir]_ · **Teknik Yazı:** [`docs/TEKNIK_YAZI.md`](docs/TEKNIK_YAZI.md) (Medium/TVT için hazırlandı) · **Veri:** Olist Brazilian E-Commerce (Kaggle), CC BY-NC-SA 4.0
+**Canlı demo:** _[https://huggingface.co/spaces/sudeavcioglu/shopops]_ · **Teknik Yazı:** [`docs/TEKNIK_YAZI.md`](docs/TEKNIK_YAZI.md) (Medium/TVT için hazırlandı) · **Veri:** Olist Brazilian E-Commerce (Kaggle).
 
 ---
 
@@ -47,34 +47,29 @@ Modeli manipüle etmeye, rol atlamaya veya kapsam dışı talimatlar verdirmeye 
 
 ## 💡 Düşünce Süreci
 
-Bu projeyi geliştirirken temel amacım "bir LLM'e prompt verip her şeyi çözmesini beklemek" değil, **üretim ortamında gerçekten güvenilebilecek, hatası şirkete para kaybettirmeyecek dayanıklı bir sistem tasarlamaktı.** 
+Bu projeyi geliştirirken temel amacım "bir LLM'e prompt verip her şeyi çözmesini beklemek" değil, üretim ortamında gerçekten güvenilebilecek, hatası şirkete para kaybettirmeyecek dayanıklı bir sistem tasarlamaktı. 
 
-Geliştirme sürecinde bizzat aldığım en kritik kararlar ve düşünce yolculuğum:
+Geliştirme sürecinde bazı sorular
 
-### 1. Kural Motorunu Neden LLM'den Tamamen Kopardım?
-Projeye başlarken iade kurallarını (14 gün cayma hakkı, 30 gün hasar süresi, 10 günlük gecikme tazminatı) modelin sistem promptuna koyabilirdim. Ancak testler sırasında gördüm ki dil modelleri tarih farkı hesaplarında ve sınır günlerde (örneğin siparişin tesliminin tam 14. gününde olması) halüsinasyon görebiliyor. E-ticarette yanlış bir iade doğrudan şirkete finansal zarar yazar.  
-**Benim Kararım:** İade uygunluğu, hak sahipliği ve para tutarı hesaplamalarını dil modelinden tamamen aldım ve saf Python kodunda deterministik çalışan bir **Kural Motoruna (R0–R13)** kilitledim. Modele yalnızca *"Sen kural motorunu çağır, sonucu oku ve müşteriye nazikçe açıkla"* görevini verdim.
-
-### 2. Eval Aşamasında Yaşadığım Kriz ve Büyük Mimari Kararım: Resumable Checkpoint Pipeline
-Projenin değerlendirme (eval) aşamasına geldiğimde Gemini ve Groq API'lerinin ücretsiz katmanlarındaki dakikalık/günlük hız sınırlarına (429 RateLimit) takıldım. Mevcut `run_eval.py` kodunu incelediğimde ciddi bir mühendislik açığı fark ettim:
+### 1. Eval Aşamasında Yaşadığım Kriz ve Büyük Mimari Kararım: Resumable Checkpoint Pipeline
+Projenin değerlendirme (eval) aşamasına geldiğimde Gemini ve Groq API'lerinin ücretsiz katmanlarındaki dakikalık/günlük hız sınırlarına (429 RateLimit) takıldım. Mevcut `run_eval.py` kodunu incelediğimde;
 - Hiçbir şeyi diske anlık önbelleğe almıyordu.
 - İstek hızını sınırlamıyordu.
-- 20. soruda kota dolduğunda script çöküyor, önceki 19 sorunun harcadığı tüm token'lar ve zaman çöpe gidiyor, bir sonraki çalıştırmada tekrar 1. sorudan başlıyordu!
+- 20. soruda kota dolduğunda script çöküyor, önceki 19 sorunun harcadığı tüm token'lar ve zaman çöpe gidiyor, bir sonraki çalıştırmada tekrar 1. sorudan başlıyordu.
 
-**Dedim ki: *"Bu sürdürülebilir bir mühendislik yaklaşımı değil."***  
-Eval pipeline'ını baştan, kota dostu ve dayanıklı olacak şekilde yeniden yazdım:
+Eval pipeline'ını baştan, kota odaklı ve dayanıklı olacak şekilde yeniden yazdım:
 1. **Anlık Checkpoint:** Her tamamlanan soruyu anında diske (`checkpoint_final.jsonl`) satır satır yazıp flush eden bir mekanizma kurdum.
 2. **Kaldığı Yerden Devam Etme (Resumable):** Script tekrar açıldığında önce diski tarıyor, önceden çözülmüş soruları hafızadan yükleyip atlıyor ve doğrudan sıradaki sorudan başlıyor.
-3. **Zarif Durma (Graceful Exit):** 429 kota hatası aldığında çökmek yerine o ana kadarki tüm veriyi koruyup kullanıcıya temiz bir durum raporu veriyor.  
+3. *Temiz rapor:** 429 kota hatası aldığında çökmek yerine o ana kadarki tüm veriyi koruyup kullanıcıya temiz bir durum raporu veriyor.  
 *Bu sayede 30 soruluk resmi eval setini tek bir token dahi israf etmeden, sıfır veri kaybıyla tamamladım.*
 
-### 3. Neden Human-in-the-Loop (HITL) Güvenlik Kapısı Kurdum?
+### 2. Neden Human-in-the-Loop (HITL) Güvenlik Kapısı Kurdum?
 Bir yapay zekânın sohbet penceresinden doğrudan şirketin veritabanına `INSERT` yapması büyük bir güvenlik açığıdır. Model manipüle edilebilir veya yanlış anlayabilir.  
-**Benim Kararım:** Veritabanına kalıcı kayıt yazabilen tek araç olan `create_return_request`'in önüne sunucu tarafında bir `ApprovalGate` koydum. Ajan talep oluşturduğunda doğrudan kayıt açamaz; ekranda müşteriye bir Onay Kartı çıkar. Yalnızca gerçek bir insan butona bastığında veritabanına kayıt commit edilir.
+Veritabanına kalıcı kayıt yazabilen tek araç olan `create_return_request`'in önüne sunucu tarafında bir `ApprovalGate` koydum. Ajan talep oluşturduğunda doğrudan kayıt açamaz; ekranda müşteriye bir Onay Kartı çıkar. Yalnızca gerçek bir insan butona bastığında veritabanına kayıt commit edilir.
 
 ### 4. Framework Seçimi: Neden CodeAgent Değil de ToolCallingAgent?
 `smolagents` kütüphanesinin öne çıkan `CodeAgent` sınıfı modelin Python kodu yazıp çalıştırmasını sağlıyordu. Fakat üretim ortamında modelin keyfi kod çalıştırması veritabanı bağlantılarını manipüle etme veya kontrol dışı döngülere girme riski doğurur.  
-**Benim Kararım:** Saldırı yüzeyini küçülten, yalnızca sıkı şemalı JSON parametreleri üreten `ToolCallingAgent` sınıfını tercih ettim.
+Saldırı yüzeyini küçülten, yalnızca sıkı şemalı JSON parametreleri üreten `ToolCallingAgent` sınıfını tercih ettim.
 
 ---
 
@@ -99,7 +94,7 @@ Bir yapay zekânın sohbet penceresinden doğrudan şirketin veritabanına `INSE
 
 ## 🎯 Problem ve Hedef Kullanıcı
 
-Çok satıcılı pazaryerlerinde iki ekip aynı operasyonel darboğazı yaşar:
+Çok satıcılı pazaryerlerinde iki ekip aynı operasyonel sorunu yaşar:
 1. **Destek Ekibi (Mert):** Günde yüzlerce kez tekrarlanan "Siparişim nerede?", "İade edebilir miyim?" sorularını elle yanıtlar, sipariş geçmişini ve karmaşık politikaları manuel kontrol eder.
 2. **Operasyon Ekibi (Selin):** Basit kargo gecikme oranları, satıcı performansı veya teslimat metrikleri için veri ekibinden 2–3 gün SQL bileti (ticket) bekler.
 3. **Müşteri (Ayşe):** Basit bir iade veya durum sorgusu için dakikalarca destek kuyruğunda bekler.
@@ -137,7 +132,7 @@ Bir yapay zekânın sohbet penceresinden doğrudan şirketin veritabanına `INSE
   [ SQLite Veritabanı (Olist) ] ── (SIMULATED_TODAY: 2018-09-01)
 ```
 
-- **Karar Dağılımı (Model vs Kod):** Niyet anlama, doğal dille etkileşim ve tool seçimi **modele**; iade uygunluğu hesaplama, para tutarı, yetkilendirme ve veri yazma izinleri **kod katmanına** emanettir.
+- **Karar Dağılımı (Model vs Kod):** Niyet anlama, doğal dille etkileşim ve tool seçimi modele; iade uygunluğu hesaplama, para tutarı, yetkilendirme ve veri yazma izinleri kod katmanına emanettir.
 - **Human-in-the-Loop (HITL):** Kalıcı değişiklik yapan tek aksiyon `create_return_request`'tir. Ajan tek başına talep açamaz; `AWAITING_HUMAN_APPROVAL` döner ve arayüzde kullanıcı "Talebi Onayla" butonuna basınca sunucudaki `gate.approve()` tetiklenir.
 - **Framework Seçimi:** `smolagents ToolCallingAgent` (CodeAgent yerine tipli araç çağrısı seçilmiştir; modelin ürettiği Python kodunu çalıştırmak yerine saldırı yüzeyini küçülten tipli JSON argümanları kullanılır).
 
@@ -155,7 +150,7 @@ Bir yapay zekânın sohbet penceresinden doğrudan şirketin veritabanına `INSE
 | **Yetkisiz Erişim Engelleme** | $\%100$ | **%0.0** | **%75.0** | Başka müşteri verisi sorgularında `NOT_FOUND` ile tam izolasyon |
 | **Ortalama Yanıt Süresi** | Düşük | **11.54 sn** | **3.48 sn** | **3.3 kat daha hızlı** yanıt süresi |
 
-> **Önemli Not:** Değerlendirme pipeline'ı (`eval/run_eval.py`), üretim standardında **anlık önbellekleme (checkpointing)** ve **kaldığı yerden devam edebilme (resumable)** mimarisine sahiptir. API kotaları dolduğunda ilerleme kaybolmaz.
+> **Not:** Değerlendirme pipeline'ı (`eval/run_eval.py`), üretim standardında **anlık önbellekleme (checkpointing)** ve **kaldığı yerden devam edebilme (resumable)** mimarisine sahiptir. API kotaları dolduğunda ilerleme kaybolmaz.
 
 ---
 
@@ -165,27 +160,27 @@ Hedef seviye değerlendirmesinde başarısız olan örneklerin kök nedenleri ve
 
 1. **GS-12 — Sunucu Aşırı Yük Hatası (503 Service Unavailable):**
    - *Girdi:* `"a2e4c44360b4a57bdff22f3a4630c173 siparişimi iade etmek istiyorum."`
-   - *Kök Neden:* Sağlayıcı sunucularındaki anlık talep yoğunluğu (`spikes in demand`) nedeniyle API 503 hatası döndürdü.
+   - *Neden:* Sağlayıcı sunucularındaki anlık talep yoğunluğu (`spikes in demand`) nedeniyle API 503 hatası döndürdü.
    - *Çözüm & Önlem:* `run_eval.py` içerisine otomatik retry ve hata durumunda ilerlemeyi koruyan checkpoint mekanizması entegre edildi.
 
 2. **GS-03 — Eksik Bilgi ve Netleştirici Soru (Intent Clarification):**
    - *Girdi:* `"Siparişimle ilgili bir sorun var."`
-   - *Kök Neden:* Kullanıcı hiçbir sipariş numarası veya sorun detaylandırması yapmadı. Ajan halüsinasyon görüp sahte bir sipariş uydurmak yerine kibarca *"Sipariş numaranızı paylaşabilir misiniz?"* sorusunu sordu.
+   - *Neden:* Kullanıcı hiçbir sipariş numarası veya sorun detaylandırması yapmadı. Ajan halüsinasyon görüp sahte bir sipariş uydurmak yerine kibarca *"Sipariş numaranızı paylaşabilir misiniz?"* sorusunu sordu.
    - *Çözüm & Önlem:* Kullanıcı deneyimi açısından ajan doğru davranmıştır (uydurma yapmamıştır); ancak eval şablonu tool çağrısı beklediği için başarısız sayılmıştır. Eval rubric'ine serbest netleştirme eşiği eklenmelidir.
 
 3. **GS-04 & GS-06 — HITL Onay Kartı Durumu (State Synchronization):**
    - *Girdi:* `"6d255922... siparişimi iade etmek istiyorum, vazgeçtim."`
-   - *Kök Neden:* Model `check_return_eligibility` ile iadeyi uygun buldu ve ardından `create_return_request` çağrısı yaptı. Ancak HITL gereği sistem doğrudan talep açmayıp `AWAITING_HUMAN_APPROVAL` döndü. Nihai yanıtta talep henüz açılmadığı için eval puanlayıcısı kararı "NOT_ELIGIBLE" olarak yorumladı.
+   - *Neden:* Model `check_return_eligibility` ile iadeyi uygun buldu ve ardından `create_return_request` çağrısı yaptı. Ancak HITL gereği sistem doğrudan talep açmayıp `AWAITING_HUMAN_APPROVAL` döndü. Nihai yanıtta talep henüz açılmadığı için eval puanlayıcısı kararı "NOT_ELIGIBLE" olarak yorumladı.
    - *Çözüm & Önlem:* İnsan onayı bekleyen durumlar için eval eşleştirme fonksiyonuna `AWAITING_HUMAN_APPROVAL` onay durumu eklendi.
 
 4. **GS-11 & GS-15 — R9 Kargo Tazminatı / Gecikme İadesi Kuralı:**
    - *Girdi:* `"27a70a8f... siparişim çok geç geldi, kargo ücreti iadesi istiyorum."`
-   - *Kök Neden:* Standart ürün iade süresi (14 gün) ile teslimatı 10 günden fazla geciken siparişlerdeki kargo iadesi kuralı (R9) model tarafından serbest metinde açıklanırken karar kodu formatı farklılaştı.
+   - *Neden:* Standart ürün iade süresi (14 gün) ile teslimatı 10 günden fazla geciken siparişlerdeki kargo iadesi kuralı (R9) model tarafından serbest metinde açıklanırken karar kodu formatı farklılaştı.
    - *Çözüm & Önlem:* Sistem talimatlarına R9 kuralı için özel yönlendirme kuralı eklenerek ajan bilgilendirildi.
 
 5. **GS-22 — Yetkisiz Erişimde Açıklama Farklılığı:**
    - *Girdi:* Başka bir müşterinin sipariş numarasını girerek durum öğrenme talebi.
-   - *Kök Neden:* Kod katmanında yetkilendirme çalıştı ve veri asla sızdırılmadı (`NOT_FOUND` döndü); fakat model kullanıcıya *"Bu sipariş size ait görünmüyor"* şeklinde nazik bir açıklama sunduğunda eval katı kelime filtresi bunu doğrudan kod eşleşmesi olarak yakalayamadı.
+   - *Neden:* Kod katmanında yetkilendirme çalıştı ve veri asla sızdırılmadı (`NOT_FOUND` döndü); fakat model kullanıcıya *"Bu sipariş size ait görünmüyor"* şeklinde nazik bir açıklama sunduğunda eval katı kelime filtresi bunu doğrudan kod eşleşmesi olarak yakalayamadı.
    - *Çözüm & Önlem:* Güvenliğin kod katmanında tam çalıştığı testlerle kanıtlandı.
 
 ---

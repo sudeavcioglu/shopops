@@ -1,22 +1,12 @@
 """ShopOps Değerlendirme (Evaluation) Pipeline'ı — Kota Dostu & Kaldığı Yerden Devam Eden (Resumable) Sürüm.
+B0 ham baseline ile Final ShopOps sistemimizi aynı test kümesinde yarıştıran, token israfını ve API kota kesintilerini 
+önlemek için anlık checkpoint (JSONL) tutan ve kaldığı yerden devam edebilen bir değerlendirme pipeline'ıdır.
 
 Özellikler:
     - Anlık Checkpoint (Önbellek): Her tamamlanan soru anında diske (JSONL) yazılır.
     - Resumable: Script durdurulsa ya da kota dolsa bile, tekrar açıldığında çözülen soruları atlar ve kaldığı yerden devam eder.
     - Graceful Quota Handling: 429 kota hatası aldığında çökmek yerine ilerlemeyi korur, temiz bir uyarı verir ve o ana kadarki sonuçları özetler.
 
-Kullanım:
-    python eval/run_eval.py --mode final              # Final ShopOps Support Agent eval
-    python eval/run_eval.py --mode b0                 # B0: Tool'suz tek LLM baseline
-    python eval/run_eval.py --mode all                # B0 ve Final'i ardışık çalıştırıp karşılaştır
-    python eval/run_eval.py --limit 5                 # Test amaçlı ilk 5 örnek
-    python eval/run_eval.py --reset-cache             # Önbelleği sıfırlayıp baştan başla
-
-Çıktılar:
-    eval/results/checkpoint_b0.jsonl                  # B0 anlık önbellek
-    eval/results/checkpoint_final.jsonl               # Final anlık önbellek
-    eval/results/eval_final_<timestamp>.json          # Tamamlanan final raporu
-    eval/results/eval_b0_<timestamp>.json             # Tamamlanan B0 raporu
 """
 from __future__ import annotations
 

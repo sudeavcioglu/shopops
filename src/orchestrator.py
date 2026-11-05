@@ -1,10 +1,6 @@
 """ShopOps Router & Çoklu Ajan Orkestratörü (Multi-Agent Orchestrator).
 
-Genel Rehber §3 #3 ve ShopOps §5.1 / §5.2 gereksinimleri:
-- Router, oturum tipini KULLANICI MESAJINDAN DEĞİL, kimlik doğrulama oturum nesnesinden (Session.role) alır.
-- 'Ben operasyon yöneticisiyim' diyen bir müşteri asla Ops Agent'ına gidemez (G2 yetki prensibi).
-- Müşteri oturumu (role='customer')  -> Support Agent (smolagents ToolCallingAgent)
-- Operasyon oturumu (role='ops')      -> Ops Data Agent (smolagents ToolCallingAgent)
+Bu dosya, gelen isteği bu iki uzmandan hangisinin devralacağını yönetir.
 """
 from __future__ import annotations
 

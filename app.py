@@ -1,12 +1,9 @@
-"""ShopOps — Pazaryeri Müşteri Destek & Operasyon Arayüzü (Gradio, Hugging Face Spaces).
+"""ShopOps — Pazaryeri Müşteri Destek & Operasyon Arayüzü.
 
   * Müşteri Destek: sohbet, ara adımlar paneli, canlı HITL onay kartı (yazma YALNIZ onay butonundan geçer)
   * Operasyon Analitiği: tanımlı metrik paneli (SQL + caveat) ve doğal dil analiz sohbeti
   * Simülasyon zamanı: SIMULATED_TODAY = 2018-09-01
   * Veritabanı repoda yoktur; yoksa açılışta Olist verisi indirilip kurulur
-
-Demo notu: iki sekme iki ayrı oturum nesnesidir (müşteri / ops). Gerçek sistemde rol giriş (auth)
-katmanından gelir; burada kimlik doğrulamanın yerini tutar.
 """
 from __future__ import annotations
 
@@ -23,15 +20,14 @@ import pandas as pd
 ROOT = Path(__file__).resolve().parent
 sys.path.insert(0, str(ROOT))
 
-import config  # noqa: E402
-from src.agents.ops_agent import OpsCtx, build_ops_agent  # noqa: E402
-from src.agents.support_agent import Ctx, StepLogger, build_agent, make_model  # noqa: E402
-from src.tools import ops_tools, support_tools as st_tools  # noqa: E402
-from src.tools.session import Session  # noqa: E402
-from src.ui_common import friendly_error, steps_markdown, summarize_trace  # noqa: E402
+import config  
+from src.agents.ops_agent import OpsCtx, build_ops_agent
+from src.agents.support_agent import Ctx, StepLogger, build_agent, make_model 
+from src.tools import ops_tools, support_tools as st_tools  
+from src.tools.session import Session  
+from src.ui_common import friendly_error, steps_markdown, summarize_trace  
 
-# ZeroGPU Space'ler açılışta en az bir @spaces.GPU fonksiyonu arar. Uygulama GPU kullanmaz (LLM bir API'dir);
-# bu yer tutucu yalnızca o denetimi geçmek içindir ve hiç çağrılmaz. Yerelde `spaces` paketi yoktur.
+
 try:
     import spaces
 
@@ -46,7 +42,7 @@ DB_ERROR: str | None = None
 try:
     from src.data_bootstrap import ensure_db
     ensure_db(config.DB_PATH)
-except Exception:  # noqa: BLE001  (ham hata kullanıcıya gösterilmez; Space loglarında görünür)
+except Exception:
     import traceback
     traceback.print_exc()
     DB_ERROR = "⚠️ Veritabanı kurulamadı. Lütfen birkaç dakika sonra sayfayı yenileyin."
@@ -115,7 +111,7 @@ def _support_agent(s: UIState):
     key = s.cust.customer_unique_id
     if s.cust_bundle is None or s.cust_bundle[0] != key:
         con_ro, _ = get_db_connections()
-        # Agent'a SALT-OKUNUR bağlantı verilir: onaylanana kadar yazması fiziksel olarak da mümkün değil.
+       
         ctx = Ctx(con_ro, con_ro, s.cust, confirm=None, defer_approval=True)
         s.cust_bundle = (key, ctx, build_agent(ctx, model=make_model(), logger=StepLogger(), verbosity=0))
     return s.cust_bundle[1], s.cust_bundle[2]
@@ -159,7 +155,7 @@ def customer_send(text: str, s: UIState | None):
         if ctx.pending:
             s.pending = ctx.pending
         s.cust_steps = summarize_trace(ctx.trace)
-    except Exception as e:  # noqa: BLE001
+    except Exception as e: 
         answer = friendly_error(e)
         s.cust_steps = []
     s.cust_msgs.append({"role": "assistant", "content": answer})

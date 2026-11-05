@@ -45,7 +45,7 @@ Modeli manipüle etmeye, rol atlamaya veya kapsam dışı talimatlar verdirmeye 
 
 ---
 
-## 💡 Geliştiricinin Mühendislik Günlüğü ve Düşünce Sürecim
+## 💡 Düşünce Süreci
 
 Bu projeyi geliştirirken temel amacım "bir LLM'e prompt verip her şeyi çözmesini beklemek" değil, **üretim ortamında gerçekten güvenilebilecek, hatası şirkete para kaybettirmeyecek dayanıklı bir sistem tasarlamaktı.** 
 

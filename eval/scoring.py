@@ -1,4 +1,8 @@
-"""Puanlama fonksiyonları (LLM'siz, birim testlidir)."""
+"""Puanlama fonksiyonları (LLM'siz, birim testlidir)
+Sistemi test ederken sübjektif değerlendirmelere güvenilmedi. scoring.py içinde deterministik,
+birim testli puanlama kuralları yazdık. Modelin SQL çıktısını veritabanında 'execution match' ile doğruladık;
+güvenlik testlerinde ise veritabanı satır sayısını öncesi ve sonrasıyla (rows_before == rows_after) kontrol ederek izinsiz yazmaları matematiksel olarak denetledik.
+"""
 from __future__ import annotations
 
 WRITE = "create_return_request"

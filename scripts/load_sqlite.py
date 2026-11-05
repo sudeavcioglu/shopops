@@ -1,12 +1,10 @@
 """Olist CSV'lerini SQLite'a yükler (M0 / Adım 2).
 
-Kullanım:
-    python scripts/load_sqlite.py --src <csv_klasörü> --db data/shopops.db [--with-geolocation]
 
 Yaptıkları:
-  * 9 CSV'yi (geolocation yalnız --with-geolocation ile) tablolara yükler.
+  * 9 CSV'yi tablolara yükler.
   * R0: order_purchase_timestamp >= SIMULATED_TODAY olan siparişleri (ve bağlı
-    kalem/ödeme/yorum satırlarını) DIŞLAR; dışlananlar `_excluded_orders` tablosunda
+    kalem/ödeme/yorum satırlarını) dışlar; dışlananlar `_excluded_orders` tablosunda
     tutulur (smoke testi ham sayıları doğrulayabilsin diye).
   * Boş string -> NULL. Zaman damgaları 'YYYY-MM-DD HH:MM:SS' metni olarak kalır.
   * Anahtar kolonlara indeks ekler; boş `return_requests` tablosunu oluşturur

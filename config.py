@@ -1,7 +1,8 @@
 """ShopOps merkezi ayarlar. Tüm iş kuralı sabitleri ve 'bugün' tek yerde durur.
 
-KURAL: Projenin hiçbir yerinde datetime.now()/date.today() kullanılmaz;
-tüm süre hesapları SIMULATED_TODAY ile yapılır.
+Tüm projenin iş kurallarını (iade süreleri, tutar eşikleri), güvenlik sınırlarını (maksimum adım, döngü engeli), 
+model ayarlarını ve deterministik tarihini (SIMULATED_TODAY = 2018-09-01) tek merkezde toplayan konfigürasyon modülüdür
+
 """
 import os
 from datetime import date
@@ -10,11 +11,11 @@ from pathlib import Path
 try:
     from dotenv import load_dotenv
     load_dotenv()
-except ImportError:  # dotenv zorunlu değil
+except ImportError:  
     pass
 
 ROOT = Path(__file__).resolve().parent
-DB_PATH = Path(os.getenv("SHOPOPS_DB") or ROOT / "data" / "shopops.db")   # boş değer varsayılana düşer
+DB_PATH = Path(os.getenv("SHOPOPS_DB") or ROOT / "data" / "shopops.db")   
 
 # --- Simülasyon zamanı -------------------------------------------------------
 SIMULATED_TODAY = date(2018, 9, 1)

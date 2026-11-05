@@ -1,11 +1,6 @@
-"""Oturum ve HITL kapısı (G1, G2). Kimlik ve onay durumu SUNUCU tarafında durur, LLM'den gelmez.
-
-Neden LLM onayı taklit edemez?
-  * Onay bir 'token string'i değil, ApprovalGate içindeki bir DURUM'dur; yalnızca insan
-    arayüzünün çağırdığı gate.approve() bu durumu değiştirir. Agent'ın tool listesinde approve yoktur.
-  * proposal_id tahmin edilemez (secrets) ve LLM onu ancak APPROVAL_REQUIRED yanıtında görür;
-    onaylanmamış bir id'yi tekrar göndermek hiçbir şey değiştirmez.
-  * Onay; oturum + order_id + reason + tutara bağlıdır ve tek kullanımlıktır.
+"""
+Kullanıcı kimliğini (Session) ve iade işlemlerindeki insan onayını (ApprovalGate) sunucu tarafında tutarak, LLM'in kendi kendine sahte onay üretmesini 
+ve müşteri yetkisini aşmasını imkânsız kılan güvenlik modülüdür.
 """
 from __future__ import annotations
 

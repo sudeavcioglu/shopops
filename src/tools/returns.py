@@ -1,4 +1,4 @@
-"""İade kural motoru (R0–R13). LLM'siz, deterministik, saf Python.
+"""İade kural motoru (R0–R13). LLM'siz.
 
 İki katman:
   * evaluate(facts, reason, today)  -> saf fonksiyon, DB'siz test edilir

@@ -1,7 +1,4 @@
-"""İlk açılışta veritabanını kurar (Streamlit Cloud / HF gibi ortamlarda repoda DB yok).
-
-Olist verisi CC BY-NC-SA 4.0 lisanslıdır; ham veri ve türetilmiş DB repoya konmaz, açılışta indirilir.
-geolocation yüklenmez (Temel'de gerekmez; kurulum süresini ve boyutu küçültür).
+"""İlk açılışta veritabanını kurar.
 """
 from __future__ import annotations
 

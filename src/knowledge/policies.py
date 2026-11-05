@@ -1,12 +1,8 @@
-"""Politika dokümanları için kaynaklı retrieval (M1 / Adım 4).
+"""Politika dokümanları için kaynaklı retrieval.
 
 Chunking: her '## Başlık' bölümü bir chunk (politikalar kısa ve bölüm bazlı yazıldı).
 Her sonuç kaynak taşır: doküman adı + bölüm + ilgili R-kuralları.
-
-Backend'ler:
-  * "bm25" (varsayılan): bağımlılıksız; Türkçe için küçük harf + 5 karakterlik kök (ek sorununu hafifletir).
-  * "e5"   (isteğe bağlı): intfloat/multilingual-e5-small, sentence-transformers gerekir; sorgu ve
-           pasaj AYNI modelle kodlanır ('query: ' / 'passage: ' önekleri).
+Müşteri Destek Asistanı (Support Agent), şirketin 6 adet Markdown kural dokümanını aramak için bu kodu kullanır.
 """
 from __future__ import annotations
 

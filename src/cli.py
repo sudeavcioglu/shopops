@@ -1,9 +1,6 @@
 """Müşteri destek CLI demosu (Temel seviye: CLI + HITL 'onayla? [e/h]').
-
-Kullanım:
-  python -m src.cli --demo                      # test için örnek müşteri kimlikleri yazdırır
-  python -m src.cli --uid <customer_unique_id>  # sohbet; çıkış: q
-Ham kimlikler yalnız terminalde görünür; ekran görüntüsü paylaşmadan önce maskeleyin.
+Web arayüzü (Streamlit) açmaya gerek kalmadan, doğrudan terminal üzerinden Müşteri Destek Asistanı 
+ile canlı sohbet etmeyi ve test yapmayı sağlar.
 """
 from __future__ import annotations
 

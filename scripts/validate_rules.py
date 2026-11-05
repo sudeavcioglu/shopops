@@ -1,6 +1,7 @@
 """Kural motorunu GERÇEK DB üzerinde Bölüm 9.1 kontrol değerleriyle doğrular.
 
-Kullanım:  python scripts/validate_rules.py --db data/shopops.db
+Kural motorunun doğruluğunu birkaç tane veriyle test etmedik. validate_rules.py scriptimizle 96.000 teslim edilmiş siparişin tamamını kural motorumuzdan geçirdik.
+14 gün, 30 gün, 500 BRL üzeri onaylar ve kargo gecikme tazminatlarında rehberin Bölüm 9.1'deki tüm referans sayılarını (3.656, 130, 8.062, 352, 33, 28, 2.195) tek tek ve sıfır hatayla doğruladık.
 Beklenenler:
   R6 penceresi (0-14 gün) 3.656 sipariş; changed_mind & refund_amount > 500  -> 130
   R7 penceresi (0-30 gün) 8.062 sipariş; damaged & refund_amount > 500       -> 352

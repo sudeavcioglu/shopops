@@ -1,0 +1,123 @@
+# ShopOps Semantic Layer — Tanımlı Metrikler
+# Her metrikte: grain, base_filter, numerator/denominator veya expression, dimensions, caveat zorunludur.
+# SIMULATED_TODAY parametresi otomatik olarak DATE(:simulated_today) ile bağlanır.
+
+late_delivery_rate:
+  name: "late_delivery_rate"
+  title: "Geç Teslim Oranı"
+  description: "Teslim edilen siparişlerde tahmini tarihten sonra teslim edilenlerin oranı"
+  grain: "order"
+  tables: ["orders o", "customers c ON c.customer_id = o.customer_id", "order_items i ON i.order_id = o.order_id", "sellers s ON s.seller_id = i.seller_id", "products p ON p.product_id = i.product_id", "category_translation t ON t.product_category_name = p.product_category_name"]
+  base_filter: "o.order_status = 'delivered' AND o.order_delivered_customer_date IS NOT NULL AND DATE(o.order_delivered_customer_date) <= DATE(:simulated_today)"
+  numerator: "COUNT(DISTINCT CASE WHEN DATE(o.order_delivered_customer_date) > DATE(o.order_estimated_delivery_date) THEN o.order_id END)"
+  denominator: "COUNT(DISTINCT o.order_id)"
+  dimensions:
+    customer_state: "c.customer_state"
+    seller_state: "s.seller_state"
+    product_category_en: "COALESCE(t.product_category_name_english, 'other')"
+    purchase_month: "strftime('%Y-%m', o.order_purchase_timestamp)"
+  caveat: "Gözlemsel orandır; nedensellik ifade etmez. Teslimat gecikmelerinde kargo firması ve coğrafi faktörler etkili olabilir."
+
+avg_delivery_days:
+  name: "avg_delivery_days"
+  title: "Ortalama Teslimat Süresi (Gün)"
+  description: "Teslim edilen siparişlerin satın alınma ile müşteriye teslim edilme arasındaki ortalama takvim günü"
+  grain: "order"
+  tables: ["orders o", "customers c ON c.customer_id = o.customer_id", "order_items i ON i.order_id = o.order_id", "sellers s ON s.seller_id = i.seller_id", "products p ON p.product_id = i.product_id", "category_translation t ON t.product_category_name = p.product_category_name"]
+  base_filter: "o.order_status = 'delivered' AND o.order_delivered_customer_date IS NOT NULL AND DATE(o.order_delivered_customer_date) <= DATE(:simulated_today)"
+  expression: "ROUND(AVG(julianday(o.order_delivered_customer_date) - julianday(o.order_purchase_timestamp)), 2)"
+  dimensions:
+    customer_state: "c.customer_state"
+    seller_state: "s.seller_state"
+    product_category_en: "COALESCE(t.product_category_name_english, 'other')"
+    purchase_month: "strftime('%Y-%m', o.order_purchase_timestamp)"
+  caveat: "Zaman damgası farkının günlük ortalamasıdır; resmî tatiller ve hafta sonları hesaba katılmaz. Satıcı/kategori kırılımında çok kalemli siparişler her kalem satırı kadar ağırlık alır."
+
+order_count:
+  name: "order_count"
+  title: "Toplam Sipariş Sayısı"
+  description: "Dönem içindeki tekil sipariş sayısı"
+  grain: "order"
+  tables: ["orders o", "customers c ON c.customer_id = o.customer_id", "order_items i ON i.order_id = o.order_id", "sellers s ON s.seller_id = i.seller_id", "products p ON p.product_id = i.product_id", "category_translation t ON t.product_category_name = p.product_category_name"]
+  base_filter: "DATE(o.order_purchase_timestamp) <= DATE(:simulated_today)"
+  expression: "COUNT(DISTINCT o.order_id)"
+  dimensions:
+    order_status: "o.order_status"
+    customer_state: "c.customer_state"
+    seller_state: "s.seller_state"
+    product_category_en: "COALESCE(t.product_category_name_english, 'other')"
+    purchase_month: "strftime('%Y-%m', o.order_purchase_timestamp)"
+  caveat: "Tekil sipariş sayısıdır; tekil müşteri sayısı (customer_unique_id) ile karıştırılmamalıdır."
+
+gmv:
+  name: "gmv"
+  title: "Brüt Satış Hacmi (GMV)"
+  description: "İptal ve temin edilemeyenler hariç tüm siparişlerin ürün bedelleri toplamı (BRL)"
+  grain: "order_item"
+  tables: ["orders o", "order_items i ON i.order_id = o.order_id", "customers c ON c.customer_id = o.customer_id", "sellers s ON s.seller_id = i.seller_id", "products p ON p.product_id = i.product_id", "category_translation t ON t.product_category_name = p.product_category_name"]
+  base_filter: "o.order_status NOT IN ('canceled', 'unavailable') AND DATE(o.order_purchase_timestamp) <= DATE(:simulated_today)"
+  expression: "ROUND(SUM(i.price), 2)"
+  dimensions:
+    customer_state: "c.customer_state"
+    seller_state: "s.seller_state"
+    product_category_en: "COALESCE(t.product_category_name_english, 'other')"
+    purchase_month: "strftime('%Y-%m', o.order_purchase_timestamp)"
+  caveat: "GMV ciro hacmidir; net kâr, gelir veya katkı payı değildir. Kargo bedeli ve taksit faizleri dahil değildir."
+
+avg_order_value:
+  name: "avg_order_value"
+  title: "Ortalama Sipariş Değeri (AOV)"
+  description: "Sipariş başına düşen ortalama ürün bedeli (BRL)"
+  grain: "order"
+  tables: ["orders o", "order_items i ON i.order_id = o.order_id", "customers c ON c.customer_id = o.customer_id", "products p ON p.product_id = i.product_id", "category_translation t ON t.product_category_name = p.product_category_name"]
+  base_filter: "o.order_status NOT IN ('canceled', 'unavailable') AND DATE(o.order_purchase_timestamp) <= DATE(:simulated_today)"
+  expression: "ROUND(SUM(i.price) * 1.0 / COUNT(DISTINCT o.order_id), 2)"
+  dimensions:
+    customer_state: "c.customer_state"
+    product_category_en: "COALESCE(t.product_category_name_english, 'other')"
+    purchase_month: "strftime('%Y-%m', o.order_purchase_timestamp)"
+  caveat: "Kargo bedeli hariç ürün sepet tutarı ortalamasıdır."
+
+avg_review_score:
+  name: "avg_review_score"
+  title: "Ortalama Değerlendirme Puanı"
+  description: "Müşterilerin bıraktığı yorumların ortalama puanı (1–5 arası)"
+  grain: "review"
+  tables: ["orders o", "order_reviews r ON r.order_id = o.order_id", "customers c ON c.customer_id = o.customer_id", "order_items i ON i.order_id = o.order_id", "products p ON p.product_id = i.product_id", "category_translation t ON t.product_category_name = p.product_category_name"]
+  base_filter: "r.review_score IS NOT NULL AND DATE(o.order_purchase_timestamp) <= DATE(:simulated_today)"
+  expression: "ROUND(AVG(r.review_score), 2)"
+  dimensions:
+    customer_state: "c.customer_state"
+    product_category_en: "COALESCE(t.product_category_name_english, 'other')"
+    purchase_month: "strftime('%Y-%m', o.order_purchase_timestamp)"
+  caveat: "Yalnızca yorum yapan müşterileri temsil eder; yanıtsız siparişler dahil değildir."
+
+cancellation_rate:
+  name: "cancellation_rate"
+  title: "İptal Edilme Oranı"
+  description: "Toplam siparişler içinde iptal (canceled) durumuna geçenlerin oranı"
+  grain: "order"
+  tables: ["orders o", "customers c ON c.customer_id = o.customer_id"]
+  base_filter: "DATE(o.order_purchase_timestamp) <= DATE(:simulated_today)"
+  numerator: "COUNT(DISTINCT CASE WHEN o.order_status = 'canceled' THEN o.order_id END)"
+  denominator: "COUNT(DISTINCT o.order_id)"
+  dimensions:
+    customer_state: "c.customer_state"
+    purchase_month: "strftime('%Y-%m', o.order_purchase_timestamp)"
+  caveat: "Gözlemsel orandır; satıcı iptali ile müşteri iptali ayrımını içermez."
+
+seller_delay_rate:
+  name: "seller_delay_rate"
+  title: "Satıcı Kaynaklı Gecikme Oranı"
+  description: "Kargoya verilen siparişlerde satıcının limit tarihinden sonra kargoya teslim etme oranı"
+  grain: "order_item"
+  tables: ["orders o", "order_items i ON i.order_id = o.order_id", "sellers s ON s.seller_id = i.seller_id", "products p ON p.product_id = i.product_id", "category_translation t ON t.product_category_name = p.product_category_name"]
+  base_filter: "o.order_delivered_carrier_date IS NOT NULL AND i.shipping_limit_date IS NOT NULL AND DATE(o.order_delivered_carrier_date) <= DATE(:simulated_today)"
+  numerator: "SUM(CASE WHEN DATE(o.order_delivered_carrier_date) > DATE(i.shipping_limit_date) THEN 1 ELSE 0 END)"
+  denominator: "COUNT(*)"
+  dimensions:
+    seller_state: "s.seller_state"
+    product_category_en: "COALESCE(t.product_category_name_english, 'other')"
+    purchase_month: "strftime('%Y-%m', o.order_purchase_timestamp)"
+  caveat: "Taşıyıcının sisteme geç giriş yapması bu oranı yapay olarak yükseltebilir."
+

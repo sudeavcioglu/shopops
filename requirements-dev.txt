@@ -1,0 +1,6 @@
+# Yerel geliştirme ve testler: pip install -r requirements-dev.txt
+-r requirements.txt
+gradio==6.31.0
+pytest>=8.0
+mcp[ws]<2
+streamlit>=1.30.0   # yalnız yedek arayüz app_streamlit.py için

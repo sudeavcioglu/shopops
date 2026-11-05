@@ -1,0 +1,6 @@
+# Hugging Face Space bağımlılıkları (gradio burada YOK: sürümü README başlığındaki sdk_version belirler)
+pandas>=2.0
+python-dotenv>=1.0
+kagglehub>=0.3
+smolagents[openai]>=1.20
+pyyaml>=6.0

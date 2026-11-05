@@ -1,0 +1,18 @@
+# Sırlar
+.env
+# Ham veri ve türetilmiş DB repoya girmez (Olist CC BY-NC-SA 4.0)
+data/*
+!data/download.py
+*.db
+*.sqlite
+# Python
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+# Vektör indeksi (yerelde üretilir) ve izler
+.chroma/
+traces/
+# Eval ham çıktıları (cevap metinlerinde ham kimlik olabilir); özet tablo README ve comparison_summary.csv ile paylaşılır
+eval/results/*.json
+!eval/results/.gitkeep

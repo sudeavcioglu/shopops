@@ -1,8 +1,6 @@
-"""Support Agent tool'ları. Her tool (con, session, ...) alır; kimlik session'dan gelir.
-
-Okuma: get_order_status, list_customer_orders, (check_return_eligibility -> returns.py)
-Yazma (HITL): create_return_request  -> TEK yazma hedefi: return_requests
-İç kuyruk: escalate_to_human (kayıt değiştirmez, yalnız insana devreder)
+"""Support Agent tool'ları. 
+Müşteri Destek Ajanı'nın sipariş sorgulama (get_order_status), listeleme, canlı desteğe aktarma ve veritabanındaki 
+tek yazma noktası olan iade talebini insan onayıyla açma işlevlerini yürüten çekirdek araç modülüdür.
 """
 from __future__ import annotations
 
@@ -16,7 +14,7 @@ from src.tools.session import Session
 STATUSES = ("created", "approved", "invoiced", "processing", "shipped", "delivered", "canceled", "unavailable")
 NOT_FOUND = {"error": "NOT_FOUND", "message": NOT_FOUND_MSG}
 TODAY = SIMULATED_TODAY.isoformat()
-ESCALATIONS: list[dict] = []  # M2'de kalıcı kuyruk; şimdilik bellek
+ESCALATIONS: list[dict] = [] 
 
 
 def _customer_only(session: Session) -> dict | None:

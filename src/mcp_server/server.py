@@ -1,9 +1,8 @@
 """ShopOps Sipariş ve İade MCP Sunucusu (shopops-orders).
 
-Genel Rehber §3 #4 ve ShopOps §5.3 gereksinimleri:
 - Kendi yazdığımız özel FastMCP sunucusu (stdio transport).
 - Sunulan araçlar: get_order_status, list_customer_orders, check_return_eligibility, create_return_request
-- Yetki ve HITL onay kontrolleri SUNUCU tarafında oturum nesnesinde (Session) tutulur.
+- Yetki ve HITL onay kontrolleri sunucu tarafında oturum nesnesinde (Session) tutulur.
 - LLM'den asla customer_id parametresi alınmaz; oturumdan (customer_unique_id) çekilir.
 """
 from __future__ import annotations

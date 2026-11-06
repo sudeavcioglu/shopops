@@ -17,7 +17,7 @@ short_description: Pazaryeri destek (iade, HITL) ve operasyon analitiği ajanı
 "Örnekpazar" pazaryerinde müşterinin *siparişim nerede / iade edebilir miyim* sorusunu **kurallara uygun ve yetkili** biçimde yanıtlayan, operasyon ekibinin metrik sorularını **tanımlı metriklerden ve salt-okunur SQL ile** cevaplayan çoklu ajan (Multi-Agent) sistemi.  
 AI Agents Bootcamp 2026 · Final Proje (P2 · ShopOps)
 
-**Canlı demo:** _[https://huggingface.co/spaces/sudeavcioglu/shopops]_ · **Teknik Yazı:** [`docs/TEKNIK_YAZI.md`](docs/TEKNIK_YAZI.md) (Medium/TVT için hazırlandı) · **Veri:** Olist Brazilian E-Commerce (Kaggle).
+**Canlı demo:** _[https://huggingface.co/spaces/sudeavcioglu/shopops]_ · **Teknik Yazı:** [`docs/TEKNIK_YAZI.md`](docs/TEKNIK_YAZI.md) (https://medium.com/@sudeavcioglu/bir-llme-%C5%9Firket-operasyonlar%C4%B1n%C4%B1-emanet-edebilir-miyiz-g%C3%BCvenli-bir-ai-agent-tasar%C4%B1m%C4%B1-41027ceccdd6) · **Veri:** Olist Brazilian E-Commerce (Kaggle).
 
 ---
 
@@ -153,6 +153,10 @@ Saldırı yüzeyini küçülten, yalnızca sıkı şemalı JSON parametreleri ü
 > **Not:** Değerlendirme pipeline'ı (`eval/run_eval.py`), üretim standardında **anlık önbellekleme (checkpointing)** ve **kaldığı yerden devam edebilme (resumable)** mimarisine sahiptir. API kotaları dolduğunda ilerleme kaybolmaz.
 
 ---
+Güvenlik Metriği Üzerine Kritik Not (%75 Eval Skoru vs. %100 Veri İzolasyonu):
+Tablodaki %75 oranı bir veri sızıntısı (data leak) olduğu anlamına gelmemektedir. Kod katmanında yapılan tüm saldırı ve birim testlerinde (pytest),
+oturum dışı müşteri verisine erişim %100 oranında engellenmiş (0 veri sızıntısı) ve veritabanından hiçbir kayıt dönmemiştir. 
+Tablodaki %25'lik kayıp, 4 testin 1'inde (GS-22) verinin yine tamamen engellenmesine rağmen, modelin kullanıcıya döndüğü doğal dil yanıtının otomatik eval puanlayıcısının (scoring.py) beklediği katı şablonla eşleşmemesinden (scorer strictness) kaynaklanmaktadır.
 
 ## 🔍 En Az 5 Başarısız Örnekle Hata Analizi
 

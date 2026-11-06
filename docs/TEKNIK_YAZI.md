@@ -1,4 +1,4 @@
-# Bir E-Ticaret Pazaryerinde Güvenli AI Agent Mimarisi: ShopOps’u Nasıl Tasarladım?
+# Bir E-Ticaret Pazaryerinde Güvenli AI Agent Mimarisi
 
 > Bir dil modeline (LLM) pazaryeri operasyonlarını emanet edebilir misiniz? Halüsinasyon riski, süresi geçmiş iadelerin onaylanması, yanlış para iadesi hesaplamaları veya yetkisiz müşteri verilerinin sızması gibi kritik tehditler karşısında naif bir sohbet botu şirkete finansal felaket getirebilir. Bu yazıda; kurgusal “Örnekpazar” e-ticaret platformu için Olist (99.441 sipariş) verisi üzerinde geliştirdiğim, Hugging Face `smolagents` tabanlı çoklu ajan (Multi-Agent), deterministik Python kural motoru, Semantic Layer ve Human-in-the-Loop (HITL) mimarisine sahip ShopOps projesinin tasarım sürecini, yaşadığım teknik krizleri ve deneysel değerlendirme sonuçlarını paylaşıyorum.
 

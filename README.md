@@ -84,7 +84,7 @@ Saldırı yüzeyini küçülten, yalnızca sıkı şemalı JSON parametreleri ü
 | **Ops Data Agent** | ✅ | Semantic layer (`metrics.yaml`), 8 metrik, salt-okunur AST doğrulamalı SQL |
 | **Orkestrasyon & Router** | ✅ | Role dayalı güvenli yönlendirme (`Session.role`) |
 | **MCP Sunucusu** | ✅ | Özel FastMCP (`shopops-orders`) stdio sunucusu |
-| **Arayüz** | ✅ | Gradio (`app.py`) + Streamlit yedeği (`app_streamlit.py`), ara adım logları |
+| **Arayüz** | ✅ | Gradio (`app.py`) + ara adım logları |
 | **Birim Testler (Pytest)** | ✅ | 108 passed, 1 xfailed (hava durumu/BM25 bilinen sınır) |
 | **Değerlendirme (Eval)** | ✅ | 30 örneklik golden set üzerinde B0 vs Final başarıyla ölçüldü |
 | **5 Hata Analizi** | ✅ | Başarısız örneklerin kök nedenleri ve çözümleri çıkarıldı |
@@ -285,7 +285,7 @@ python app.py
 - **Dil Modeli:** Google Gemini (`gemini-2.0-flash` / `gemini-3.8-flash`) veya Groq
 - **Veritabanı & Arama:** SQLite (Olist E-Commerce), BM25 (Politika RAG)
 - **Protokol:** FastMCP (Model Context Protocol) stdio sunucusu
-- **Arayüz:** Gradio 6.x & Streamlit
+- **Arayüz:** Gradio 6.x 
 - **Test & Değerlendirme:** Pytest, Özel Resumable Evaluation Pipeline
 
 ---
